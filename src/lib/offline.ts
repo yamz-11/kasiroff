@@ -160,6 +160,7 @@ async function pullStock() {
     const key = `${r.branch_id}:${r.product_id}`;
     return { key, branch_id: r.branch_id, product_id: r.product_id, qty: Number(r.qty) - (pending.get(key) ?? 0) };
   }));
+  await db.meta.put({ key: 'lastSync', value: Date.now() });   // dipakai untuk status "Tersinkron HH.MM"
 }
 
 // ---------- Pemicu otomatis (panggil sekali di root layout, client component) ----------
@@ -186,4 +187,21 @@ export async function nextReceiptNo(branchCode: string) {
     return n;
   });
   return `${branchCode}-${day}-${dev}-${String(seq).padStart(3, '0')}`;
+}
+
+// ---------- Profil: peran & cabang aktif disimpan di perangkat (dipakai saat offline) ----------
+export async function refreshProfile() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session || typeof navigator === 'undefined' || !navigator.onLine) return;
+  const [{ data: prof }, { data: br }] = await Promise.all([
+    supabase.from('profiles').select('role, branch_id').eq('user_id', session.user.id).maybeSingle(),
+    supabase.from('branches').select('id,name,code').order('name'),
+  ]);
+  if (prof) await db.meta.put({ key: 'role', value: prof.role });
+  if (br?.length) {
+    await db.meta.put({ key: 'branches', value: br });
+    // Kasir: cabang pada profilnya. Owner/manager tanpa cabang: cabang pertama.
+    const mine = prof?.branch_id ? br.find(b => b.id === prof.branch_id) : br[0];
+    if (mine) await db.meta.put({ key: 'branch', value: mine });
+  }
 }

@@ -1,26 +1,33 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-bg: #eef0ee;
+  --color-surface: #ffffff;
+  --color-ink: #17211d;
+  --color-muted: #66726d;
+  --color-line: #d7ddd9;
+  --color-brand: #0a6b4b;
+  --color-brand-soft: #e1f0ea;
+  --color-warn: #8a4b00;
+  --color-warn-soft: #fff1d6;
+  --color-warn-line: #e8c36a;
+  --color-danger: #b3261e;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+html { color-scheme: light; }
+body { background: var(--color-bg); color: var(--color-ink); -webkit-font-smoothing: antialiased; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: 0.45; }
+:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@media print {
+  @page { margin: 4mm; }
+  body { background: #fff; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
 }
