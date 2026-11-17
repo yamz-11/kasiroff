@@ -91,9 +91,10 @@ export default function Home() {
           Buka kasir
         </Link>
         {(role?.value === 'owner' || role?.value === 'manager') && (
-          <Link href="/dashboard" className="mt-3 block rounded-md border border-line py-3 text-center font-medium">
-            Dashboard cabang
-          </Link>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <Link href="/dashboard" className="rounded-md border border-line py-3 text-center font-medium">Dashboard</Link>
+            <Link href="/produk" className="rounded-md border border-line py-3 text-center font-medium">Produk</Link>
+          </div>
         )}
 
         <dl className="mt-8 text-sm">

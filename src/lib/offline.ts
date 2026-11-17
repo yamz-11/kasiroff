@@ -12,7 +12,7 @@ export const supabase = createClient(
 // ---------- Tipe ----------
 export interface Product {
   id: string; sku?: string; name: string; category?: string;
-  price: number; cost: number; track_stock: boolean;
+  price: number; cost: number; track_stock: boolean; min_stock?: number;
   is_active: boolean; deleted_at?: string | null; updated_at: string;
 }
 export interface StockRow { key: string; branch_id: string; product_id: string; qty: number }

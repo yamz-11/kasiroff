@@ -11,10 +11,11 @@ Aplikasi kasir (Point of Sale) berbasis web untuk usaha UMKM dengan banyak caban
 - Stok berbasis ledger (`stock_movements`) sehingga aman saat banyak kasir/cabang sinkron bersamaan
 - Nomor struk unik per perangkat, tetap aman dibuat saat offline
 - PWA: bisa di-install ke layar utama dan dibuka tanpa internet (production build)
+- Kelola produk `/produk` (owner/manager): tambah, ubah, sembunyikan produk, barang masuk, koreksi stok
 - Dashboard monitoring `/dashboard` (owner/manager): penjualan harian, arus kas tunai, stok menipis, metode bayar, produk terlaris, transaksi terbaru, per cabang atau gabungan, diperbarui langsung lewat Supabase Realtime
 - Multi-cabang dengan peran `owner`, `manager`, `cashier` dan pembatasan data lewat Row Level Security
 
-Belum ada UI untuk: manajemen produk, penyesuaian stok, buka/tutup shift, kas masuk/keluar (tabel dan fungsi dasarnya sudah ada), void/retur, dan transfer stok antar cabang. Lihat bagian Rencana pengembangan.
+Belum ada UI untuk: buka/tutup shift, kas masuk/keluar (tabel dan fungsi dasarnya sudah ada), void/retur, dan transfer stok antar cabang. Lihat bagian Rencana pengembangan.
 
 ## Arsitektur
 
@@ -47,7 +48,8 @@ Prinsip utama:
 │  │  ├─ page.tsx              login + beranda
 │  │  ├─ manifest.ts           manifest PWA
 │  │  ├─ pos/page.tsx          halaman kasir
-│  │  └─ dashboard/page.tsx    dashboard monitoring multi-cabang
+│  │  ├─ dashboard/page.tsx    dashboard monitoring multi-cabang
+│  │  └─ produk/page.tsx       kelola produk dan stok
 │  ├─ components/
 │  │  ├─ SyncProvider.tsx      daftar service worker + jalankan loop sinkronisasi
 │  │  └─ ConnectionStatus.tsx  indikator online/offline dan antrean kirim
@@ -58,7 +60,8 @@ Prinsip utama:
 └─ supabase/
    ├─ schema.sql               tabel, trigger, RLS, fungsi push_sale
    ├─ seed.sql                 tenant, cabang, profil owner, produk contoh
-   └─ dashboard.sql            fungsi dashboard_summary, min_stock, Realtime
+   ├─ dashboard.sql            fungsi dashboard_summary, min_stock, Realtime
+   └─ produk.sql               default tenant untuk halaman Produk
 ```
 
 ## Prasyarat
@@ -89,6 +92,7 @@ Pastikan lokasi akhirnya benar: `package.json` dan `src/` berada di folder yang 
 3. Buka **Authentication > Users > Add user > Create new user**, isi email dan password, centang **Auto Confirm User**, lalu salin **User UID**.
 4. Buka `supabase/seed.sql`, ganti `UUID-USER-DI-SINI` dengan User UID tadi, lalu jalankan di SQL Editor.
 5. Jalankan `supabase/dashboard.sql` (fungsi ringkasan dashboard, kolom batas stok, dan Realtime). File ini aman dijalankan ulang.
+6. Jalankan `supabase/produk.sql` (agar halaman Produk bisa menyimpan data atas nama akun yang login). Aman dijalankan ulang.
 
 ### 4. Isi environment
 
@@ -141,6 +145,17 @@ PWA dan service worker memerlukan HTTPS (kecuali `localhost`). Alamat seperti `h
 
 **Setiap deploy versi baru, naikkan nilai `V` di `public/sw.js`** (misalnya `'v1'` menjadi `'v2'`) agar cache disiapkan ulang dan perangkat tidak menampilkan versi lama.
 
+## Menambah produk
+
+Buka `/produk` (tombol "Produk" di Beranda, hanya untuk owner dan manager). Perlu internet.
+
+- **Tambah produk**: nama, harga jual, harga modal, kode/barcode (opsional), kategori, batas stok menipis, dan stok awal. Produk langsung muncul di kasir semua perangkat setelah sinkronisasi (maksimal sekitar 30 detik).
+- **Ubah**: harga, nama, kategori, batas stok, atau sembunyikan produk dari kasir. Produk yang sudah pernah terjual tidak dihapus, hanya disembunyikan, agar riwayat penjualan tetap utuh.
+- **Stok**: *Barang masuk* menambah stok, *Koreksi stok* menambah atau mengurangi (misalnya barang rusak). Semua perubahan tercatat sebagai riwayat di tabel `stock_movements`.
+- Mengubah harga tidak mengubah transaksi yang sudah tercatat.
+
+Untuk memasukkan banyak produk sekaligus, pakai Supabase Table Editor > tabel `products` > Insert > Import data from CSV. Karena dijalankan dari dashboard Supabase (bukan akun aplikasi), CSV harus menyertakan kolom `tenant_id` (salin dari tabel `tenants`).
+
 ## Dashboard
 
 Buka `/dashboard` (tombol "Dashboard cabang" di Beranda, hanya tampil untuk owner dan manager).
@@ -168,6 +183,7 @@ Buka `/dashboard` (tombol "Dashboard cabang" di Beranda, hanya tampil untuk owne
 | Offline muncul halaman dino | Service worker belum aktif. Jalankan `npm run build` lalu `npm start` (bukan `npm run dev`), buka `/pos` saat online, refresh sekali, cek Application > Service Workers. |
 | Login gagal "Email not confirmed" | Saat membuat user, centang **Auto Confirm User**, atau konfirmasi email user tersebut. |
 | Antrean sync tidak turun | Cek tab Console untuk error. Item dengan error validasi tetap berada di outbox (field `lastError` di IndexedDB > `kasir-umkm` > `outbox`). |
+| Halaman Produk: gagal menyimpan, pesan `null value in column "tenant_id"` | Jalankan `supabase/produk.sql` di SQL Editor. |
 | Dashboard: `Could not find the function ... dashboard_summary` | Jalankan `supabase/dashboard.sql` di SQL Editor. |
 | Dashboard tidak berubah otomatis (status "Realtime terputus") | Pastikan `dashboard.sql` sudah dijalankan (menambah tabel ke publikasi Realtime) dan Realtime aktif di proyek Supabase. Tanpa Realtime, data tetap diperbarui tiap 1 menit. |
 | Tampilan versi lama setelah deploy | Naikkan `V` di `public/sw.js`, atau Unregister service worker dan Clear site data. |

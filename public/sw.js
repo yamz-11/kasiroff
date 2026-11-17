@@ -1,9 +1,9 @@
 // public/sw.js — service worker sederhana tanpa library.
 // Naikkan nilai V setiap kali deploy versi baru agar cache disiapkan ulang.
-const V = 'v2';
+const V = 'v3';
 const STATIC = 'kasir-static-' + V;
 const PAGES = 'kasir-pages-' + V;
-const PRECACHE_PAGES = ['/', '/pos', '/dashboard'];
+const PRECACHE_PAGES = ['/', '/pos', '/dashboard', '/produk'];
 
 // Simpan halaman + semua file JS/CSS yang dirujuk HTML-nya, supaya bisa dibuka offline sejak pertama
 async function warm() {
