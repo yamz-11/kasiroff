@@ -114,23 +114,6 @@ Buka `/produk` (tombol "Produk" di Beranda, hanya untuk owner dan manager). Perl
 
 Untuk memasukkan banyak produk sekaligus, pakai Supabase Table Editor > tabel `products` > Insert > Import data from CSV. Karena dijalankan dari dashboard Supabase (bukan akun aplikasi), CSV harus menyertakan kolom `tenant_id` (salin dari tabel `tenants`).
 
-## Dashboard
-
-Buka `/dashboard` (tombol "Dashboard cabang" di Beranda, hanya tampil untuk owner dan manager).
-
-- Angka "hari ini" memakai zona waktu WIB (Asia/Jakarta) dan waktu transaksi di perangkat kasir.
-- **Arus kas tunai** = tunai dari penjualan + kas masuk lain - kas keluar, pada hari yang dipilih. Ini arus kas harian, belum termasuk modal awal laci; saldo laci akan lengkap setelah fitur buka/tutup shift dibuat.
-- **Stok menipis**: stok cabang kurang dari atau sama dengan `products.min_stock` (bawaan 5). Ubah per produk lewat Table Editor Supabase.
-- Perubahan pada tabel `sales`, `cash_entries`, dan `branch_stock` memicu pembaruan otomatis. Jika Realtime terputus, halaman memuat ulang tiap 1 menit dan saat tab kembali aktif.
-- Saat offline, yang tampil adalah data terakhir yang tersimpan di perangkat.
-
-## Catatan keamanan
-
-- Perlindungan data ada di RLS (lihat `schema.sql`), bukan di key. Key publishable/anon memang boleh terlihat di browser.
-- Peran: `owner` dan `manager` mengakses semua cabang; `cashier` hanya cabang pada profilnya. Untuk membatasi kasir ke satu cabang, isi kolom `branch_id` di tabel `profiles`.
-- Pada `seed.sql`, owner dibuat dengan `branch_id` kosong (akses semua cabang).
-- Sesi login tersimpan di browser. Jika sesi habis saat offline, transaksi tetap aman di antrean dan terkirim setelah login ulang.
-
 ## Rencana pengembangan
 
 - Dashboard monitoring multi-cabang (penjualan harian, kas, stok menipis) dengan Supabase Realtime
